@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 import type { AISummary as AISummaryType } from "@/app/lib/types";
 
-/** Delay between revealing each character (ms) – typewriter speed. */
 const CHAR_DELAY_MS = 35;
 
 export interface AISummaryProps {
@@ -16,15 +16,12 @@ export function AISummary({ data }: AISummaryProps) {
   const targetRef = useRef(target);
   targetRef.current = target;
 
-  // When target shrinks (e.g. new search), clamp displayed length
   useEffect(() => {
     if (target.length < displayedLength) setDisplayedLength(target.length);
   }, [target, displayedLength]);
 
-  // Typewriter: reveal one character at a time until we match target length
   useEffect(() => {
     if (displayedLength >= target.length) return;
-
     const intervalId = setInterval(() => {
       setDisplayedLength((prev) => {
         const len = targetRef.current.length;
@@ -33,12 +30,11 @@ export function AISummary({ data }: AISummaryProps) {
         return next;
       });
     }, CHAR_DELAY_MS);
-
     return () => clearInterval(intervalId);
   }, [target, displayedLength]);
 
   const displayedText = target.slice(0, displayedLength);
-  const isCatchingUp = displayedLength < target.length;
+  const markdownText = displayedText.replace(/\\n/g, "\n");
 
   return (
     <article
@@ -54,15 +50,34 @@ export function AISummary({ data }: AISummaryProps) {
         </span>
         <span className="text-sm font-semibold uppercase tracking-wide">خلاصه هوشمند</span>
       </div>
-      <p className="mt-3 text-[15px] leading-relaxed text-zinc-700 dark:text-zinc-300">
-        {displayedText}
-        {(data.isStreaming || isCatchingUp) && (
-          <span
-            className="ms-0.5 inline-block h-4 w-0.5 align-middle animate-[blink_1s_step-end_infinite] bg-emerald-600 dark:bg-emerald-400"
-            aria-hidden
-          />
-        )}
-      </p>
+      <div className="mt-3 text-[15px] leading-relaxed text-zinc-700 dark:text-zinc-300 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ol]:list-decimal [&_li]:ms-4">
+        <ReactMarkdown
+          components={{
+            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+            strong: ({ children }) => <strong className="font-bold text-zinc-900 dark:text-zinc-100">{children}</strong>,
+            em: ({ children }) => <em className="italic">{children}</em>,
+            code: ({ children }) => (
+              <code className="rounded bg-zinc-200 px-1 py-0.5 font-mono text-sm dark:bg-zinc-700">{children}</code>
+            ),
+            ul: ({ children }) => <ul className="my-2 list-disc ps-6">{children}</ul>,
+            ol: ({ children }) => <ol className="my-2 list-decimal ps-6">{children}</ol>,
+            li: ({ children }) => <li className="my-0.5">{children}</li>,
+            a: ({ href, children }) => (
+              <a href={href} className="text-emerald-600 underline hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300" target="_blank" rel="noopener noreferrer">
+                {children}
+              </a>
+            ),
+            h1: ({ children }) => <h1 className="mb-2 mt-3 text-lg font-bold">{children}</h1>,
+            h2: ({ children }) => <h2 className="mb-2 mt-2 text-base font-bold">{children}</h2>,
+            h3: ({ children }) => <h3 className="mb-1 mt-2 text-sm font-bold">{children}</h3>,
+            blockquote: ({ children }) => (
+              <blockquote className="border-s-4 border-zinc-300 ps-3 dark:border-zinc-600">{children}</blockquote>
+            ),
+          }}
+        >
+          {markdownText}
+        </ReactMarkdown>
+      </div>
     </article>
   );
 }

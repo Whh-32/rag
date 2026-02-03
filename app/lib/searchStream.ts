@@ -1,8 +1,6 @@
-import type { SearchResult, ApiSearchResultItem, ApiTokenPayload } from "./types";
+import type { SearchResult, ApiSearchResultItem, ApiTokenPayload, SearchOptions } from "./types";
 
-/** Client calls this; use /api/search (Next route) or set NEXT_PUBLIC_SEARCH_API_URL. */
-const DEFAULT_API_URL = "/";
-const API_PATH = "/api/rag/stream"
+const API_PATH = "/api/rag/stream";
 
 /**
  * Maps API search result item to app SearchResult.
@@ -47,25 +45,30 @@ export interface SearchStreamCallbacks {
 }
 
 /**
- * Calls the search API (event stream), parses search_results and token events,
- * and invokes callbacks. Uses NEXT_PUBLIC_SEARCH_API_URL if set, else /api/search.
+ * Calls the search API (event stream) with POST.
+ * Body: { query, top_k, temperature }.
  */
 export async function searchStream(
   query: string,
-  callbacks: SearchStreamCallbacks
+  callbacks: SearchStreamCallbacks,
+  options: SearchOptions = {}
 ): Promise<void> {
   const baseUrl =
     typeof process !== "undefined" && process.env.NEXT_PUBLIC_SEARCH_API_URL
       ? `${process.env.NEXT_PUBLIC_SEARCH_API_URL}${API_PATH}`
-      : DEFAULT_API_URL;
+      : API_PATH;
 
-  console.log(process.env.NEXT_PUBLIC_SEARCH_API_URLL)
-  const url = baseUrl.includes("?") ? `${baseUrl}&query=${encodeURIComponent(query)}` : `${baseUrl}?query=${encodeURIComponent(query)}`;
+  const top_k = options.top_k ?? 5;
+  const temperature = Math.max(0, Math.min(1, options.temperature ?? 0.5));
 
   try {
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { Accept: "text/event-stream" },
+    const res = await fetch(baseUrl, {
+      method: "POST",
+      headers: {
+        Accept: "text/event-stream",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query, top_k, temperature }),
     });
 
     if (!res.ok) {

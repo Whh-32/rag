@@ -42,3 +42,9 @@ export interface ApiTokenPayload {
   message?: { role?: string; content?: string };
   done?: boolean;
 }
+
+/** Search request options: top_k (number of results), temperature (0–1 creativity). */
+export interface SearchOptions {
+  top_k?: number;
+  temperature?: number;
+}
