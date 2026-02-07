@@ -5,18 +5,17 @@ const API_PATH = "/api/rag/stream";
 /**
  * Maps API search result item to app SearchResult.
  */
-function mapApiResultToSearchResult(item: ApiSearchResultItem): SearchResult {
-  const snippet = item.preview.replace(/\r\n/g, " ").replace(/\s+/g, " ").trim();
-  const firstLine = snippet.slice(0, 100);
-  const title = firstLine.length < snippet.length ? `${firstLine}…` : firstLine;
-  return {
-    id: String(item.idPage),
-    title: item.Article_title || `نتیجه ${item.rank}`,
-    url: `#result-${item.idPage}`,
-    snippet,
-    displayUrl: `صفحه ${item.idPage}`,
-  };
-}
+// function mapApiResultToSearchResult(item: ApiSearchResultItem): SearchResult {
+//   const snippet = item.preview.replace(/\r\n/g, " ").replace(/\s+/g, " ").trim();
+
+//   return {
+//     id: String(item.idPage),
+//     title: item.Article_title || `نتیجه ${item.rank}`,
+//     url: `#result-${item.idPage}`,
+//     snippet,
+//     displayUrl: `صفحه ${item.idPage}`,
+//   };
+// }
 
 /**
  * Parses a single "data: {...}" line from SSE.
@@ -38,7 +37,7 @@ function parseStreamLine(line: string): { type: string; data: unknown } | null {
 }
 
 export interface SearchStreamCallbacks {
-  onResults: (results: SearchResult[]) => void;
+  onResults: (results: ApiSearchResultItem[]) => void;
   onToken: (content: string) => void;
   onDone?: () => void;
   onError?: (error: Error) => void;
@@ -96,7 +95,7 @@ export async function searchStream(
 
         if (parsed.type === "search_results") {
           const items = Array.isArray(parsed.data) ? (parsed.data as ApiSearchResultItem[]) : [];
-          callbacks.onResults(items.map(mapApiResultToSearchResult));
+          callbacks.onResults(items);
         } else if (parsed.type === "token") {
           const dataStr =
             typeof parsed.data === "string" ? parsed.data : JSON.stringify(parsed.data);

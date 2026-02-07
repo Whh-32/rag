@@ -3,23 +3,26 @@
 import { useState, useCallback, useRef } from "react";
 import { flushSync } from "react-dom";
 import { searchStream } from "@/app/lib/searchStream";
-import type { SearchResult, AISummary, SearchOptions } from "@/app/lib/types";
+import type { ApiSearchResultItem, AISummary, SearchOptions } from "@/app/lib/types";
 import { SearchBar } from "@/app/components/SearchBar";
 import { SearchOptions as SearchOptionsComponent } from "@/app/components/SearchOptions";
 import { SearchResults } from "@/app/components/SearchResults";
 
 const DEFAULT_TOP_K = 5;
 const DEFAULT_TEMPERATURE = 0.1;
+/** Frontend-only: minimum similarity (0–1) to show a result. Default 0 = show all. */
+const DEFAULT_MIN_SIMILARITY = 0;
 
 export default function Home() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<ApiSearchResultItem[]>([]);
   const [summaryText, setSummaryText] = useState("");
   const [isStreamingSummary, setIsStreamingSummary] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [topK, setTopK] = useState(DEFAULT_TOP_K);
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
+  const [minSimilarity, setMinSimilarity] = useState(DEFAULT_MIN_SIMILARITY);
   const summaryStartedAt = useRef<string | null>(null);
 
   const hasSearched = results.length > 0 || summaryText.length > 0 || isLoading;
@@ -119,6 +122,8 @@ export default function Home() {
             topK={topK}
             temperature={temperature}
             onChange={handleOptionsChange}
+            minSimilarity={minSimilarity}
+            onMinSimilarityChange={setMinSimilarity}
             compact={hasSearched}
             disabled={isLoading}
           />
@@ -139,6 +144,7 @@ export default function Home() {
             <SearchResults
               summary={response.summary}
               results={response.results}
+              minSimilarity={minSimilarity}
             />
           )}
           {!response && !error && isLoading && (

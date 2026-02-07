@@ -25,16 +25,21 @@ export interface AISummary {
  */
 export interface SearchResponse {
   summary: AISummary;
-  results: SearchResult[];
+  results: ApiSearchResultItem[];
 }
 
 /** API event: search_results payload. */
 export interface ApiSearchResultItem {
-  rank: number;
-  idPage: number;
-  similarity: number;
-  preview: string;
-  Article_title: string
+  "rank": number,
+  "similarity": number,
+  "page_id": number,
+  "page_number": number,
+  "Article_id": number,
+  "Article_title": string,
+  "Article_title_tr": string,
+  "Article_url": string,
+  "language": string,
+  "preview": string
 }
 
 /** API event: token payload (stringified JSON). */
